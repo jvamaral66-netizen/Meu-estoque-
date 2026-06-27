@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    
+    <!-- Blue to Emerald Gradient -->
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Glassmorphism overlay -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Drop Shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Smooth rounded square base -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bgGrad)" stroke="#334155" stroke-width="6" />
+
+  <!-- Inner glowing decorative accent -->
+  <rect x="40" y="40" width="432" height="432" rx="104" fill="none" stroke="url(#brandGrad)" stroke-width="4" stroke-opacity="0.3" />
+
+  <!-- Main Isometric/Flat Icon Element with shadow -->
+  <g filter="url(#shadow)">
+    <!-- Smartphone Frame / Box container -->
+    <rect x="146" y="110" width="220" height="292" rx="36" fill="#111827" stroke="url(#brandGrad)" stroke-width="8" />
+    
+    <!-- Screen content: Dynamic Stock Chart with Bars and Tag -->
+    <!-- Upward arrow line -->
+    <path d="M 180 320 L 230 270 L 280 290 L 330 210" fill="none" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 300 210 L 330 210 L 330 240" fill="none" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Glowing Accent dots -->
+    <circle cx="330" cy="210" r="10" fill="#10b981" />
+    <circle cx="230" cy="270" r="8" fill="#3b82f6" />
+    <circle cx="280" cy="290" r="8" fill="#3b82f6" />
+
+    <!-- Stock bars representing inventory -->
+    <rect x="180" y="340" width="24" height="24" rx="4" fill="#334155" />
+    <rect x="214" y="310" width="24" height="54" rx="4" fill="url(#brandGrad)" />
+    <rect x="248" y="325" width="24" height="39" rx="4" fill="#334155" />
+    <rect x="282" y="270" width="24" height="94" rx="4" fill="url(#brandGrad)" />
+    <rect x="316" y="230" width="24" height="134" rx="4" fill="url(#brandGrad)" />
+
+    <!-- Top Speaker/Notch -->
+    <rect x="226" y="125" width="60" height="10" rx="5" fill="#1f2937" />
+  </g>
+
+  <!-- Shiny Glass Reflection Overlay -->
+  <path d="M 32 144 C 32 82 82 32 144 32 L 368 32 C 430 32 480 82 480 144 L 480 200 L 32 300 Z" fill="url(#glassGrad)" />
+</svg>

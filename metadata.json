@@ -1,0 +1,6 @@
+{
+  "name": "Meu Estoque",
+  "description": "Aplicativo simples para controle de compra, venda e estoque de iPhones com persistência local.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
