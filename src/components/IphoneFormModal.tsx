@@ -13,7 +13,7 @@ import {
 interface IphoneFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (phoneData: Omit<iPhone, 'id' | 'status'>) => void;
+  onSave: (phoneData: Omit<iPhone, 'id' | 'status'>, quantidade: number) => void;
 }
 
 export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormModalProps) {
@@ -47,6 +47,10 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
   const [dataCompra, setDataCompra] = useState<string>(getTodayDateString());
   const [observacoes, setObservacoes] = useState('');
 
+  // New States for quantity management
+  const [quantidade, setQuantidade] = useState<number>(1);
+  const [tipoPreco, setTipoPreco] = useState<'unitario' | 'total'>('unitario');
+
   const [error, setError] = useState('');
 
   // Reset form when modal opens
@@ -74,6 +78,8 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
       setValorCompra('');
       setDataCompra(getTodayDateString());
       setObservacoes('');
+      setQuantidade(1);
+      setTipoPreco('unitario');
       setError('');
     }
   }, [isOpen]);
@@ -83,9 +89,15 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const purchaseValue = parseFloat(valorCompra);
+    const inputPriceValue = parseFloat(valorCompra);
+    const qtyValue = Math.floor(quantidade);
 
-    if (isNaN(purchaseValue) || purchaseValue <= 0) {
+    if (isNaN(qtyValue) || qtyValue <= 0) {
+      setError('A quantidade comprada deve ser de pelo menos 1 unidade.');
+      return;
+    }
+
+    if (isNaN(inputPriceValue) || inputPriceValue <= 0) {
       setError('O valor da compra deve ser maior que zero.');
       return;
     }
@@ -93,6 +105,10 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
       setError('Por favor, informe a data da compra.');
       return;
     }
+
+    const purchaseValue = tipoPreco === 'total'
+      ? Number((inputPriceValue / qtyValue).toFixed(2))
+      : inputPriceValue;
 
     let selectedModelo = '';
     let selectedMarca = '';
@@ -197,7 +213,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
       valorCompra: purchaseValue,
       dataCompra,
       observacoes: observacoes.trim() || undefined,
-    });
+    }, qtyValue);
     
     onClose();
   };
@@ -783,45 +799,143 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Purchase Value */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Valor da Compra</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <span className="text-slate-400 text-sm font-semibold">R$</span>
+          {/* Seção de Quantidade e Custo */}
+          <div className="p-4 bg-slate-900/40 rounded-2xl border border-slate-750/70 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* Quantidade */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Quantidade Comprada</label>
+                <div className="flex items-center bg-slate-900 border border-slate-750 rounded-xl p-1 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setQuantidade(prev => Math.max(1, prev - 1))}
+                    className="w-9 h-9 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-850 rounded-lg transition-all cursor-pointer font-bold text-lg"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={quantidade}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        setQuantidade(Math.max(1, val));
+                      } else {
+                        setQuantidade(1);
+                      }
+                    }}
+                    className="w-full text-center bg-transparent border-none text-white font-bold font-mono text-sm focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    id="input-quantidade"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantidade(prev => prev + 1)}
+                    className="w-9 h-9 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-850 rounded-lg transition-all cursor-pointer font-bold text-lg"
+                  >
+                    +
+                  </button>
                 </div>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  required
-                  value={valorCompra}
-                  onChange={(e) => setValorCompra(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-750 focus:border-blue-500 rounded-xl text-white font-semibold font-mono text-sm focus:outline-none transition-colors"
-                  id="input-valor-compra"
-                />
+              </div>
+
+              {/* Tipo de Custo (Unitário ou Total) */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Como informar o custo?</label>
+                <div className="grid grid-cols-2 gap-1 bg-slate-900 p-1 border border-slate-750 rounded-xl h-11">
+                  <button
+                    type="button"
+                    onClick={() => setTipoPreco('unitario')}
+                    className={`py-1.5 px-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                      tipoPreco === 'unitario'
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    Preço de Cada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTipoPreco('total')}
+                    className={`py-1.5 px-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                      tipoPreco === 'total'
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    Total Gasto
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Purchase Date */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Data da Compra</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Calendar className="w-4 h-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-750/30">
+              {/* Valor Pago (Dinâmico) */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">
+                  {tipoPreco === 'unitario' ? 'Custo de Cada Unidade' : 'Custo Total Gasto'}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="text-slate-400 text-sm font-semibold">R$</span>
+                  </div>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    required
+                    value={valorCompra}
+                    onChange={(e) => setValorCompra(e.target.value)}
+                    placeholder="0,00"
+                    className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-750 focus:border-blue-500 rounded-xl text-white font-semibold font-mono text-sm focus:outline-none transition-colors"
+                    id="input-valor-compra"
+                  />
                 </div>
-                <input
-                  type="date"
-                  required
-                  value={dataCompra}
-                  onChange={(e) => setDataCompra(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-750 focus:border-blue-500 rounded-xl text-white font-medium text-sm focus:outline-none transition-colors"
-                  id="input-data-compra"
-                />
+              </div>
+
+              {/* Data da Compra */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Data da Compra</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="date"
+                    required
+                    value={dataCompra}
+                    onChange={(e) => setDataCompra(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-750 focus:border-blue-500 rounded-xl text-white font-medium text-sm focus:outline-none transition-colors"
+                    id="input-data-compra"
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Live Calculation Info Helper */}
+            {quantidade > 1 && valorCompra && !isNaN(parseFloat(valorCompra)) && parseFloat(valorCompra) > 0 && (
+              <div className="bg-blue-500/10 text-blue-400 text-xs px-3.5 py-2.5 rounded-xl border border-blue-500/20 flex items-center gap-2 font-medium">
+                <span className="text-base">✨</span>
+                <span>
+                  {tipoPreco === 'total' ? (
+                    <>
+                      Você gastou <strong>R$ {parseFloat(valorCompra).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> no total. Cada uma das {quantidade} ferramentas/unidades sairá por{' '}
+                      <strong className="text-white underline font-mono">
+                        R$ {(parseFloat(valorCompra) / quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </strong>.
+                    </>
+                  ) : (
+                    <>
+                      Cada uma das {quantidade} ferramentas/unidades custa <strong>R$ {parseFloat(valorCompra).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>. O valor total investido será de{' '}
+                      <strong className="text-white underline font-mono">
+                        R$ {(parseFloat(valorCompra) * quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </strong>.
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
 
         </form>

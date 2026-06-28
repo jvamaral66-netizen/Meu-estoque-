@@ -80,15 +80,18 @@ export default function App() {
     saveState(updated);
   };
 
-  const handleBuyIphone = (phoneData: Omit<iPhone, 'id' | 'status'>) => {
-    const newPhone: iPhone = {
-      ...phoneData,
-      id: Math.random().toString(36).substring(2, 9),
-      status: 'estoque'
-    };
+  const handleBuyIphone = (phoneData: Omit<iPhone, 'id' | 'status'>, quantidade: number = 1) => {
+    const newPhones: iPhone[] = [];
+    for (let i = 0; i < quantidade; i++) {
+      newPhones.push({
+        ...phoneData,
+        id: Math.random().toString(36).substring(2, 9),
+        status: 'estoque'
+      });
+    }
     const updated = {
       ...state,
-      aparelhos: [newPhone, ...state.aparelhos]
+      aparelhos: [...newPhones, ...state.aparelhos]
     };
     saveState(updated);
   };
