@@ -10,8 +10,10 @@ export interface Produto {
   status: 'estoque' | 'vendido';
   valorVenda?: number;
   dataVenda?: string; // YYYY-MM-DD
-  meioPagamento?: 'banco' | 'dinheiro'; // Meio de pagamento da compra (padrão: 'banco')
-  meioRecebimento?: 'banco' | 'dinheiro'; // Meio de recebimento da venda (padrão: 'banco')
+  meioPagamento?: 'banco' | 'dinheiro' | 'sem_impacto'; // Meio de pagamento da compra (padrão: 'banco', 'sem_impacto' não altera caixa)
+  meioRecebimento?: 'banco' | 'dinheiro' | 'misto'; // Meio de recebimento da venda (padrão: 'banco', 'misto' para Pix + Dinheiro)
+  valorRecebidoBanco?: number; // Para vendas mistas
+  valorRecebidoDinheiro?: number; // Para vendas mistas
   
   // Campos específicos novos
   marca?: string; // Para Android (Samsung, Xiaomi, etc.) ou Notebook

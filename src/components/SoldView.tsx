@@ -209,10 +209,24 @@ export default function SoldView({ vendidos, onUndoSale }: SoldViewProps) {
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-300 font-mono">
                             {formatCurrency(item.valorCompra)}
-                            <div className="text-xxs text-slate-500 mt-0.5">Comprou: {formatDate(item.dataCompra)}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {formatDate(item.dataCompra)} • {' '}
+                              {item.meioPagamento === 'dinheiro' ? 'Dinheiro' : item.meioPagamento === 'sem_impacto' ? 'Sem Caixa' : 'Banco'}
+                            </div>
                           </td>
                           <td className="px-6 py-4 font-bold text-white font-mono">
                             {formatCurrency(item.valorVenda || 0)}
+                            <div className="text-[10px] text-slate-500 font-sans mt-0.5 font-normal">
+                              {item.meioRecebimento === 'dinheiro' ? (
+                                'Dinheiro'
+                              ) : item.meioRecebimento === 'misto' ? (
+                                <span className="text-purple-400 font-medium">
+                                  Dividido (Pix: {formatCurrency(item.valorRecebidoBanco ?? 0)} • Din: {formatCurrency(item.valorRecebidoDinheiro ?? 0)})
+                                </span>
+                              ) : (
+                                'Banco / Pix'
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className={`font-extrabold font-mono ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -289,11 +303,29 @@ export default function SoldView({ vendidos, onUndoSale }: SoldViewProps) {
 
                           <div className="flex justify-between">
                             <span className="text-slate-400">Pago na compra</span>
-                            <span className="font-semibold text-slate-300 font-mono">{formatCurrency(item.valorCompra)}</span>
+                            <span className="font-semibold text-slate-300 font-mono">
+                              {formatCurrency(item.valorCompra)}
+                              <span className="text-[10px] text-slate-500 font-sans ml-1.5 font-medium">
+                                ({item.meioPagamento === 'dinheiro' ? 'Dinheiro' : item.meioPagamento === 'sem_impacto' ? 'Sem Caixa' : 'Banco'})
+                              </span>
+                            </span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-baseline">
                             <span className="text-slate-400">Recebido na venda</span>
-                            <span className="font-bold text-white font-mono">{formatCurrency(item.valorVenda || 0)}</span>
+                            <div className="text-right">
+                              <span className="font-bold text-white font-mono">{formatCurrency(item.valorVenda || 0)}</span>
+                              <div className="text-[10px] text-slate-500 font-sans font-medium mt-0.5">
+                                {item.meioRecebimento === 'dinheiro' ? (
+                                  'Dinheiro'
+                                ) : item.meioRecebimento === 'misto' ? (
+                                  <span className="text-purple-400 block">
+                                    Dividido (Pix: {formatCurrency(item.valorRecebidoBanco ?? 0)} / Din: {formatCurrency(item.valorRecebidoDinheiro ?? 0)})
+                                  </span>
+                                ) : (
+                                  'Banco / Pix'
+                                )}
+                              </div>
+                            </div>
                           </div>
 
                           {item.observacoes && (

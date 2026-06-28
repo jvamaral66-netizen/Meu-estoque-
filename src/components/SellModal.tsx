@@ -8,7 +8,14 @@ interface SellModalProps {
   onClose: () => void;
   estoque: iPhone[];
   preSelectedIphoneId?: string;
-  onSell: (iphoneId: string, valorVenda: number, dataVenda: string, meioRecebimento: 'banco' | 'dinheiro') => void;
+  onSell: (
+    iphoneId: string,
+    valorVenda: number,
+    dataVenda: string,
+    meioRecebimento: 'banco' | 'dinheiro' | 'misto',
+    valorBanco?: number,
+    valorDinheiro?: number
+  ) => void;
 }
 
 export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneId, onSell }: SellModalProps) {
@@ -20,7 +27,9 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
   const [selectedId, setSelectedId] = useState('');
   const [valorVenda, setValorVenda] = useState('');
   const [dataVenda, setDataVenda] = useState(getTodayDateString());
-  const [meioRecebimento, setMeioRecebimento] = useState<'banco' | 'dinheiro'>('banco');
+  const [meioRecebimento, setMeioRecebimento] = useState<'banco' | 'dinheiro' | 'misto'>('banco');
+  const [valorBanco, setValorBanco] = useState('');
+  const [valorDinheiro, setValorDinheiro] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -35,9 +44,48 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
       setValorVenda('');
       setDataVenda(getTodayDateString());
       setMeioRecebimento('banco');
+      setValorBanco('');
+      setValorDinheiro('');
       setError('');
     }
   }, [isOpen, preSelectedIphoneId, estoque]);
+
+  // When switching to misto, prefill defaults
+  useEffect(() => {
+    if (meioRecebimento === 'misto') {
+      const total = parseFloat(valorVenda) || 0;
+      setValorBanco((total / 2).toString());
+      setValorDinheiro((total / 2).toString());
+    } else {
+      setValorBanco('');
+      setValorDinheiro('');
+    }
+  }, [meioRecebimento]);
+
+  const handleValorVendaChange = (val: string) => {
+    setValorVenda(val);
+    if (meioRecebimento === 'misto') {
+      const total = parseFloat(val) || 0;
+      setValorBanco((total / 2).toString());
+      setValorDinheiro((total / 2).toString());
+    }
+  };
+
+  const handleDinheiroChange = (val: string) => {
+    setValorDinheiro(val);
+    const numDinheiro = parseFloat(val) || 0;
+    const total = parseFloat(valorVenda) || 0;
+    const remaining = Math.max(0, total - numDinheiro);
+    setValorBanco(remaining ? Number(remaining.toFixed(2)).toString() : '0');
+  };
+
+  const handleBancoChange = (val: string) => {
+    setValorBanco(val);
+    const numBanco = parseFloat(val) || 0;
+    const total = parseFloat(valorVenda) || 0;
+    const remaining = Math.max(0, total - numBanco);
+    setValorDinheiro(remaining ? Number(remaining.toFixed(2)).toString() : '0');
+  };
 
   if (!isOpen) return null;
 
@@ -65,7 +113,23 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
       return;
     }
 
-    onSell(selectedId, saleValue, dataVenda, meioRecebimento);
+    if (meioRecebimento === 'misto') {
+      const vBanco = parseFloat(valorBanco) || 0;
+      const vDinheiro = parseFloat(valorDinheiro) || 0;
+      if (vBanco < 0 || vDinheiro < 0) {
+        setError('Os valores parciais não podem ser negativos.');
+        return;
+      }
+      const sum = Number((vBanco + vDinheiro).toFixed(2));
+      const totalFixed = Number(saleValue.toFixed(2));
+      if (Math.abs(sum - totalFixed) > 0.02) {
+        setError(`A soma dos valores parciais (${formatCurrency(sum)}) deve ser igual ao valor total da venda (${formatCurrency(saleValue)}).`);
+        return;
+      }
+      onSell(selectedId, saleValue, dataVenda, 'misto', vBanco, vDinheiro);
+    } else {
+      onSell(selectedId, saleValue, dataVenda, meioRecebimento);
+    }
     onClose();
   };
 
@@ -170,7 +234,7 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
                     min="0"
                     required
                     value={valorVenda}
-                    onChange={(e) => setValorVenda(e.target.value)}
+                    onChange={(e) => handleValorVendaChange(e.target.value)}
                     placeholder="0,00"
                     className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-750 focus:border-emerald-500 rounded-xl text-white font-semibold font-mono text-sm focus:outline-none transition-colors"
                     id="input-valor-venda"
@@ -218,8 +282,8 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
 
               {/* Destination/Receipt Method */}
               <div className="space-y-2 pt-2 border-t border-slate-750/30">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Receber Valor Em (Destino)</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Como Recebeu o Valor? (Destino)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setMeioRecebimento('banco')}
@@ -230,7 +294,7 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
                     }`}
                   >
                     <Building2 className="w-4 h-4 shrink-0" />
-                    Saldo do Banco
+                    Banco / Pix / Cartão
                   </button>
                   <button
                     type="button"
@@ -244,8 +308,63 @@ export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneI
                     <DollarSign className="w-4 h-4 shrink-0" />
                     Dinheiro Físico
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setMeioRecebimento('misto')}
+                    className={`py-2.5 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                      meioRecebimento === 'misto'
+                        ? 'bg-purple-600/10 text-purple-400 border-purple-500/30 font-extrabold shadow-sm'
+                        : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-slate-300'
+                    }`}
+                  >
+                    <BadgePercent className="w-4 h-4 shrink-0" />
+                    Dividido (Misto)
+                  </button>
                 </div>
               </div>
+
+              {/* Sub-inputs for Split Payment */}
+              {meioRecebimento === 'misto' && (
+                <div className="p-4 bg-slate-900/45 rounded-2xl border border-slate-750/50 space-y-3" id="split-payment-inputs">
+                  <span className="text-[11px] font-bold text-purple-400 block uppercase tracking-wider font-display">Ajustar Divisão do Recebimento</span>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Em Dinheiro (R$)</label>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold font-mono">R$</span>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={valorDinheiro}
+                          onChange={(e) => handleDinheiroChange(e.target.value)}
+                          className="w-full pl-7 pr-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-semibold font-mono text-xs focus:border-purple-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">No Banco/Pix/Cartão (R$)</label>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold font-mono">R$</span>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={valorBanco}
+                          onChange={(e) => handleBancoChange(e.target.value)}
+                          className="w-full pl-7 pr-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white font-semibold font-mono text-xs focus:border-purple-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    * Ao alterar um valor, o outro se ajusta automaticamente para somar o total de <span className="font-bold text-slate-200">{formatCurrency(parsedSalePrice)}</span>.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </form>

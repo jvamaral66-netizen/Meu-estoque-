@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, SlidersHorizontal, Battery, Calendar, ShieldAlert, ArrowUpRight, DollarSign, Tag, Info, Filter, Smartphone, Laptop, Cpu, Hammer, FileText } from 'lucide-react';
+import { Search, SlidersHorizontal, Battery, Calendar, ShieldAlert, ArrowUpRight, DollarSign, Tag, Info, Filter, Smartphone, Laptop, Cpu, Hammer, FileText, Building2 } from 'lucide-react';
 import { iPhone } from '../types';
 import { formatCurrency, formatDate } from '../utils';
 
@@ -211,6 +211,25 @@ export default function StockView({ estoque, onSellClick, onOpenBuy, onDeletePho
                       <div className="flex justify-between">
                         <span className="text-slate-400">Data de Compra</span>
                         <span className="font-medium text-slate-200">{formatDate(item.dataCompra)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Origem da Compra</span>
+                        <span className="font-semibold text-xs flex items-center gap-1">
+                          {item.meioPagamento === 'dinheiro' ? (
+                            <span className="text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/10 text-[10px]">
+                              <DollarSign className="w-3 h-3" /> Dinheiro
+                            </span>
+                          ) : item.meioPagamento === 'sem_impacto' ? (
+                            <span className="text-rose-400 flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/10 text-[10px]">
+                              <ShieldAlert className="w-3 h-3" /> Sem usar Caixa
+                            </span>
+                          ) : (
+                            <span className="text-blue-400 flex items-center gap-1 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/10 text-[10px]">
+                              <Building2 className="w-3 h-3" /> Banco
+                            </span>
+                          )}
+                        </span>
                       </div>
 
                       <div className="flex justify-between items-baseline pt-1">

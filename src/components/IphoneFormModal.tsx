@@ -50,7 +50,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
   // New States for quantity management
   const [quantidade, setQuantidade] = useState<number>(1);
   const [tipoPreco, setTipoPreco] = useState<'unitario' | 'total'>('unitario');
-  const [meioPagamento, setMeioPagamento] = useState<'banco' | 'dinheiro'>('banco');
+  const [meioPagamento, setMeioPagamento] = useState<'banco' | 'dinheiro' | 'sem_impacto'>('banco');
 
   const [error, setError] = useState('');
 
@@ -919,7 +919,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
             {/* Meio de Pagamento */}
             <div className="space-y-2 pt-2 border-t border-slate-750/30">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Origem do Dinheiro (Pagamento)</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setMeioPagamento('banco')}
@@ -943,6 +943,18 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
                 >
                   <DollarSign className="w-4 h-4 shrink-0" />
                   Dinheiro Físico
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMeioPagamento('sem_impacto')}
+                  className={`py-2.5 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                    meioPagamento === 'sem_impacto'
+                      ? 'bg-rose-600/10 text-rose-400 border-rose-500/30 font-extrabold shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-slate-300'
+                  }`}
+                >
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
+                  Sem usar Caixa
                 </button>
               </div>
             </div>

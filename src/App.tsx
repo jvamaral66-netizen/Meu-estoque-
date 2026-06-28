@@ -155,7 +155,14 @@ export default function App() {
     saveState(updated);
   };
 
-  const handleSellIphone = (id: string, valorVenda: number, dataVenda: string, meioRecebimento: 'banco' | 'dinheiro' = 'banco') => {
+  const handleSellIphone = (
+    id: string,
+    valorVenda: number,
+    dataVenda: string,
+    meioRecebimento: 'banco' | 'dinheiro' | 'misto' = 'banco',
+    valorBanco?: number,
+    valorDinheiro?: number
+  ) => {
     const updatedAparelhos = state.aparelhos.map((item) => {
       if (item.id === id) {
         return {
@@ -163,7 +170,9 @@ export default function App() {
           status: 'vendido' as const,
           valorVenda,
           dataVenda,
-          meioRecebimento
+          meioRecebimento,
+          valorRecebidoBanco: meioRecebimento === 'misto' ? valorBanco : undefined,
+          valorRecebidoDinheiro: meioRecebimento === 'misto' ? valorDinheiro : undefined
         };
       }
       return item;
@@ -197,7 +206,7 @@ export default function App() {
   const handleUndoSale = (id: string) => {
     const updatedAparelhos = state.aparelhos.map((item) => {
       if (item.id === id) {
-        const { valorVenda, dataVenda, ...rest } = item;
+        const { valorVenda, dataVenda, meioRecebimento, valorRecebidoBanco, valorRecebidoDinheiro, ...rest } = item;
         return {
           ...rest,
           status: 'estoque' as const
@@ -287,11 +296,26 @@ export default function App() {
   const despesas = state.despesas ?? [];
 
   // Split balance calculations
-  const comprasNoBanco = state.aparelhos.reduce((sum, item) => item.meioPagamento !== 'dinheiro' ? sum + item.valorCompra : sum, 0);
+  const comprasNoBanco = state.aparelhos.reduce((sum, item) => (item.meioPagamento === 'banco' || !item.meioPagamento) ? sum + item.valorCompra : sum, 0);
   const comprasNoDinheiro = state.aparelhos.reduce((sum, item) => item.meioPagamento === 'dinheiro' ? sum + item.valorCompra : sum, 0);
 
-  const vendasNoBanco = vendidos.reduce((sum, item) => item.meioRecebimento !== 'dinheiro' ? sum + (item.valorVenda || 0) : sum, 0);
-  const vendasNoDinheiro = vendidos.reduce((sum, item) => item.meioRecebimento === 'dinheiro' ? sum + (item.valorVenda || 0) : sum, 0);
+  const vendasNoBanco = vendidos.reduce((sum, item) => {
+    if (item.meioRecebimento === 'banco' || !item.meioRecebimento) {
+      return sum + (item.valorVenda || 0);
+    } else if (item.meioRecebimento === 'misto') {
+      return sum + (item.valorRecebidoBanco ?? 0);
+    }
+    return sum;
+  }, 0);
+
+  const vendasNoDinheiro = vendidos.reduce((sum, item) => {
+    if (item.meioRecebimento === 'dinheiro') {
+      return sum + (item.valorVenda || 0);
+    } else if (item.meioRecebimento === 'misto') {
+      return sum + (item.valorRecebidoDinheiro ?? 0);
+    }
+    return sum;
+  }, 0);
 
   const despesasNoBanco = despesas.reduce((sum, item) => item.meioPagamento !== 'dinheiro' ? sum + item.valor : sum, 0);
   const despesasNoDinheiro = despesas.reduce((sum, item) => item.meioPagamento === 'dinheiro' ? sum + item.valor : sum, 0);
