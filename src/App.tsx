@@ -17,13 +17,14 @@ import {
   X
 } from 'lucide-react';
 
-import { iPhone, AppState } from './types';
+import { iPhone, AppState, Despesa } from './types';
 import { SEED_APARELHOS, isCurrentMonth, formatMonthYearPT } from './utils';
 import StatsGrid from './components/StatsGrid';
 import IphoneFormModal from './components/IphoneFormModal';
 import SellModal from './components/SellModal';
 import StockView from './components/StockView';
 import SoldView from './components/SoldView';
+import ExpensesView from './components/ExpensesView';
 
 const STORAGE_KEY = 'controle_iphones_v1';
 
@@ -37,11 +38,14 @@ export default function App() {
 
   const [state, setState] = useState<AppState>({
     capitalInicial: 15000,
-    aparelhos: []
+    capitalBancoInicial: 10000,
+    capitalDinheiroInicial: 5000,
+    aparelhos: [],
+    despesas: []
   });
 
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthString());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'estoque' | 'vendidos'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'estoque' | 'vendidos' | 'despesas'>('dashboard');
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [sellPreSelectedId, setSellPreSelectedId] = useState<string | undefined>(undefined);
@@ -54,15 +58,52 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setState(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as AppState;
+        
+        // Safe migration for Bank and Cash splits & Expenses
+        const capitalBancoInicial = parsed.capitalBancoInicial ?? Number((parsed.capitalInicial * 0.70).toFixed(2));
+        const capitalDinheiroInicial = parsed.capitalDinheiroInicial ?? Number((parsed.capitalInicial * 0.30).toFixed(2));
+        const despesas = parsed.despesas ?? [];
+        
+        setState({
+          ...parsed,
+          capitalBancoInicial,
+          capitalDinheiroInicial,
+          despesas,
+          capitalInicial: parsed.capitalInicial || (capitalBancoInicial + capitalDinheiroInicial)
+        });
       } catch (e) {
         console.error('Error parsing localStorage', e);
       }
     } else {
       // First time loading: Load seed data so the app has context
+      const initialBanco = 10000;
+      const initialDinheiro = 5000;
       setState({
-        capitalInicial: 15000,
-        aparelhos: SEED_APARELHOS
+        capitalInicial: initialBanco + initialDinheiro,
+        capitalBancoInicial: initialBanco,
+        capitalDinheiroInicial: initialDinheiro,
+        aparelhos: SEED_APARELHOS,
+        despesas: [
+          {
+            id: 'exp-1',
+            descricao: 'Anúncio Patrocinado Instagram',
+            valor: 150.00,
+            data: '2026-06-15',
+            meioPagamento: 'banco',
+            categoria: 'marketing',
+            observacoes: 'Campanha de venda dos iPhones'
+          },
+          {
+            id: 'exp-2',
+            descricao: 'Embalagens e plástico bolha',
+            valor: 68.00,
+            data: '2026-06-18',
+            meioPagamento: 'dinheiro',
+            categoria: 'embalagem',
+            observacoes: 'Material para envio postal'
+          }
+        ]
       });
       setShowWelcomeAlert(true);
     }
@@ -76,7 +117,25 @@ export default function App() {
 
   // State handlers
   const handleUpdateCapital = (newCapital: number) => {
-    const updated = { ...state, capitalInicial: newCapital };
+    // Splits old simple capital updates as 70/30 bank/cash
+    const banco = Number((newCapital * 0.70).toFixed(2));
+    const dinheiro = Number((newCapital * 0.30).toFixed(2));
+    const updated = { 
+      ...state, 
+      capitalInicial: newCapital,
+      capitalBancoInicial: banco,
+      capitalDinheiroInicial: dinheiro
+    };
+    saveState(updated);
+  };
+
+  const handleUpdateCapitalSplit = (banco: number, dinheiro: number) => {
+    const updated = {
+      ...state,
+      capitalBancoInicial: banco,
+      capitalDinheiroInicial: dinheiro,
+      capitalInicial: banco + dinheiro
+    };
     saveState(updated);
   };
 
@@ -96,14 +155,15 @@ export default function App() {
     saveState(updated);
   };
 
-  const handleSellIphone = (id: string, valorVenda: number, dataVenda: string) => {
+  const handleSellIphone = (id: string, valorVenda: number, dataVenda: string, meioRecebimento: 'banco' | 'dinheiro' = 'banco') => {
     const updatedAparelhos = state.aparelhos.map((item) => {
       if (item.id === id) {
         return {
           ...item,
           status: 'vendido' as const,
           valorVenda,
-          dataVenda
+          dataVenda,
+          meioRecebimento
         };
       }
       return item;
@@ -112,6 +172,26 @@ export default function App() {
       ...state,
       aparelhos: updatedAparelhos
     });
+  };
+
+  const handleAddDespesa = (despesaData: Omit<Despesa, 'id'>) => {
+    const newDespesa: Despesa = {
+      ...despesaData,
+      id: Math.random().toString(36).substring(2, 9)
+    };
+    const updated = {
+      ...state,
+      despesas: [newDespesa, ...(state.despesas ?? [])]
+    };
+    saveState(updated);
+  };
+
+  const handleDeleteDespesa = (id: string) => {
+    const updated = {
+      ...state,
+      despesas: (state.despesas ?? []).filter(item => item.id !== id)
+    };
+    saveState(updated);
   };
 
   const handleUndoSale = (id: string) => {
@@ -152,8 +232,11 @@ export default function App() {
 
   const confirmClearAll = () => {
     saveState({
-      capitalInicial: 10000,
-      aparelhos: []
+      capitalInicial: 15000,
+      capitalBancoInicial: 10000,
+      capitalDinheiroInicial: 5000,
+      aparelhos: [],
+      despesas: []
     });
     setShowWelcomeAlert(false);
     setIsConfirmClearAllOpen(false);
@@ -162,7 +245,29 @@ export default function App() {
   const handleLoadSamples = () => {
     saveState({
       capitalInicial: 15000,
-      aparelhos: SEED_APARELHOS
+      capitalBancoInicial: 10000,
+      capitalDinheiroInicial: 5000,
+      aparelhos: SEED_APARELHOS,
+      despesas: [
+        {
+          id: 'exp-1',
+          descricao: 'Anúncio Patrocinado Instagram',
+          valor: 150.00,
+          data: '2026-06-15',
+          meioPagamento: 'banco',
+          categoria: 'marketing',
+          observacoes: 'Campanha de venda dos iPhones'
+        },
+        {
+          id: 'exp-2',
+          descricao: 'Embalagens e plástico bolha',
+          valor: 68.00,
+          data: '2026-06-18',
+          meioPagamento: 'dinheiro',
+          categoria: 'embalagem',
+          observacoes: 'Material para envio postal'
+        }
+      ]
     });
   };
 
@@ -176,13 +281,24 @@ export default function App() {
   // Sum of (sale price - purchase price) for all sold items
   const lucroTotal = vendidos.reduce((sum, item) => sum + ((item.valorVenda || 0) - item.valorCompra), 0);
 
-  // Total purchase amount for ALL items (used for robust balance calc)
-  const totalTodasCompras = state.aparelhos.reduce((sum, item) => sum + item.valorCompra, 0);
-  // Total sale amount for sold items
-  const totalTodasVendas = vendidos.reduce((sum, item) => sum + (item.valorVenda || 0), 0);
+  // Fallback defaults for safety
+  const capitalBancoInicial = state.capitalBancoInicial ?? Number((state.capitalInicial * 0.70).toFixed(2));
+  const capitalDinheiroInicial = state.capitalDinheiroInicial ?? Number((state.capitalInicial * 0.30).toFixed(2));
+  const despesas = state.despesas ?? [];
 
-  // Saldo disponível = Capital Inicial - Total Compras Realizadas + Total Vendas Realizadas
-  const saldoDisponivel = state.capitalInicial - totalTodasCompras + totalTodasVendas;
+  // Split balance calculations
+  const comprasNoBanco = state.aparelhos.reduce((sum, item) => item.meioPagamento !== 'dinheiro' ? sum + item.valorCompra : sum, 0);
+  const comprasNoDinheiro = state.aparelhos.reduce((sum, item) => item.meioPagamento === 'dinheiro' ? sum + item.valorCompra : sum, 0);
+
+  const vendasNoBanco = vendidos.reduce((sum, item) => item.meioRecebimento !== 'dinheiro' ? sum + (item.valorVenda || 0) : sum, 0);
+  const vendasNoDinheiro = vendidos.reduce((sum, item) => item.meioRecebimento === 'dinheiro' ? sum + (item.valorVenda || 0) : sum, 0);
+
+  const despesasNoBanco = despesas.reduce((sum, item) => item.meioPagamento !== 'dinheiro' ? sum + item.valor : sum, 0);
+  const despesasNoDinheiro = despesas.reduce((sum, item) => item.meioPagamento === 'dinheiro' ? sum + item.valor : sum, 0);
+
+  const saldoBanco = capitalBancoInicial - comprasNoBanco + vendasNoBanco - despesasNoBanco;
+  const saldoDinheiro = capitalDinheiroInicial - comprasNoDinheiro + vendasNoDinheiro - despesasNoDinheiro;
+  const saldoDisponivel = saldoBanco + saldoDinheiro;
 
   // Check if a date string falls in the selected month
   const isInSelectedMonth = (dateString: string) => {
@@ -190,6 +306,8 @@ export default function App() {
     if (selectedMonth === 'all') return true;
     return dateString.substring(0, 7) === selectedMonth;
   };
+
+  const totalDespesasMes = despesas.reduce((sum, item) => isInSelectedMonth(item.data) ? sum + item.valor : sum, 0);
 
   // Get all unique months (YYYY-MM) from purchases and sales, sorted chronologically descending
   const getUniqueMonths = () => {
@@ -357,6 +475,26 @@ export default function App() {
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setActiveTab('despesas')}
+              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'despesas'
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              id="tab-despesas"
+            >
+              Despesas
+              {despesas.length > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
+                  activeTab === 'despesas' 
+                    ? 'bg-rose-950 text-rose-300' 
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}>
+                  {despesas.length}
+                </span>
+              )}
+            </button>
           </nav>
         </div>
       </header>
@@ -466,12 +604,18 @@ export default function App() {
                 {/* Financial Overview Cards */}
                 <StatsGrid
                   capitalInicial={state.capitalInicial}
-                  onUpdateCapital={handleUpdateCapital}
+                  capitalBancoInicial={capitalBancoInicial}
+                  capitalDinheiroInicial={capitalDinheiroInicial}
+                  onUpdateCapitalSplit={handleUpdateCapitalSplit}
                   saldoDisponivel={saldoDisponivel}
+                  saldoBanco={saldoBanco}
+                  saldoDinheiro={saldoDinheiro}
                   valorEstoque={valorEstoque}
                   lucroTotal={lucroTotalSelecionado}
                   totalCompradoMes={totalCompradoMes}
                   totalVendidoMes={totalVendidoMes}
+                  totalDespesasMes={totalDespesasMes}
+                  onOpenDespesasTab={() => setActiveTab('despesas')}
                   selectedMonthName={selectedMonth === 'all' ? 'Todos os meses' : formatMonthYearPT(selectedMonth)}
                 />
 
@@ -592,6 +736,15 @@ export default function App() {
               <SoldView
                 vendidos={vendidos}
                 onUndoSale={handleUndoSale}
+              />
+            )}
+
+            {activeTab === 'despesas' && (
+              <ExpensesView
+                despesas={despesas}
+                selectedMonth={selectedMonth}
+                onAddDespesa={handleAddDespesa}
+                onDeleteDespesa={handleDeleteDespesa}
               />
             )}
           </motion.div>

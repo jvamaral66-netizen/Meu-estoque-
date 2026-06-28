@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, DollarSign, Smartphone, ShieldAlert, Palette, HardDrive, BatteryCharging, Tag, Laptop, Cpu, Hammer, FileText } from 'lucide-react';
+import { X, Calendar, DollarSign, Building2, Smartphone, ShieldAlert, Palette, HardDrive, BatteryCharging, Tag, Laptop, Cpu, Hammer, FileText } from 'lucide-react';
 import { iPhone } from '../types';
 import { 
   IPHONE_MODELS, 
@@ -50,6 +50,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
   // New States for quantity management
   const [quantidade, setQuantidade] = useState<number>(1);
   const [tipoPreco, setTipoPreco] = useState<'unitario' | 'total'>('unitario');
+  const [meioPagamento, setMeioPagamento] = useState<'banco' | 'dinheiro'>('banco');
 
   const [error, setError] = useState('');
 
@@ -80,6 +81,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
       setObservacoes('');
       setQuantidade(1);
       setTipoPreco('unitario');
+      setMeioPagamento('banco');
       setError('');
     }
   }, [isOpen]);
@@ -212,6 +214,7 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
       saudeBateria: selectedSaudeBateria,
       valorCompra: purchaseValue,
       dataCompra,
+      meioPagamento,
       observacoes: observacoes.trim() || undefined,
     }, qtyValue);
     
@@ -910,6 +913,37 @@ export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormM
                     id="input-data-compra"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Meio de Pagamento */}
+            <div className="space-y-2 pt-2 border-t border-slate-750/30">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block font-display">Origem do Dinheiro (Pagamento)</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMeioPagamento('banco')}
+                  className={`py-2.5 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                    meioPagamento === 'banco'
+                      ? 'bg-blue-600/10 text-blue-400 border-blue-500/30 font-extrabold shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-slate-300'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  Saldo do Banco
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMeioPagamento('dinheiro')}
+                  className={`py-2.5 px-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                    meioPagamento === 'dinheiro'
+                      ? 'bg-emerald-600/10 text-emerald-400 border-emerald-500/30 font-extrabold shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-slate-300'
+                  }`}
+                >
+                  <DollarSign className="w-4 h-4 shrink-0" />
+                  Dinheiro Físico
+                </button>
               </div>
             </div>
 
