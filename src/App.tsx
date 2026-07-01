@@ -14,7 +14,8 @@ import {
   ShoppingBag,
   ArrowUpRight,
   AlertTriangle,
-  X
+  X,
+  Database
 } from 'lucide-react';
 
 import { iPhone, AppState, Despesa } from './types';
@@ -25,6 +26,7 @@ import SellModal from './components/SellModal';
 import StockView from './components/StockView';
 import SoldView from './components/SoldView';
 import ExpensesView from './components/ExpensesView';
+import BackupModal from './components/BackupModal';
 
 const STORAGE_KEY = 'controle_iphones_v1';
 
@@ -52,6 +54,7 @@ export default function App() {
   const [showWelcomeAlert, setShowWelcomeAlert] = useState(false);
   const [deletingPhoneId, setDeletingPhoneId] = useState<string | null>(null);
   const [isConfirmClearAllOpen, setIsConfirmClearAllOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
 
   // Load data from localStorage
   useEffect(() => {
@@ -446,80 +449,92 @@ export default function App() {
             </div>
           </div>
 
-          {/* Tab Navigation */}
-          <nav className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/30" id="navigation-tabs">
+          {/* Tab Navigation & Backup Button */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+            <nav className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-700/30" id="navigation-tabs">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  activeTab === 'dashboard'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                id="tab-dashboard"
+              >
+                Visão Geral
+              </button>
+              <button
+                onClick={() => setActiveTab('estoque')}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'estoque'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                id="tab-estoque"
+              >
+                Estoque
+                {estoque.length > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
+                    activeTab === 'estoque' 
+                      ? 'bg-blue-900 text-blue-200' 
+                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                  }`}>
+                    {estoque.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('vendidos')}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'vendidos'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                id="tab-vendidos"
+              >
+                Vendidos
+                {vendidos.length > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
+                    activeTab === 'vendidos' 
+                      ? 'bg-emerald-950 text-emerald-300' 
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  }`}>
+                    {vendidos.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('despesas')}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'despesas'
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+                id="tab-despesas"
+              >
+                Despesas
+                {despesas.length > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
+                    activeTab === 'despesas' 
+                      ? 'bg-rose-950 text-rose-300' 
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}>
+                    {despesas.length}
+                  </span>
+                )}
+              </button>
+            </nav>
+
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'dashboard'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              id="tab-dashboard"
+              onClick={() => setIsBackupModalOpen(true)}
+              className="p-2.5 bg-purple-600/15 hover:bg-purple-600/25 text-purple-400 border border-purple-500/20 rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 font-bold text-xs shrink-0"
+              title="Backup de Segurança (Salvar/Restaurar dados)"
+              type="button"
             >
-              Visão Geral
+              <Database className="w-4 h-4" />
+              <span className="hidden md:inline">Backup</span>
             </button>
-            <button
-              onClick={() => setActiveTab('estoque')}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'estoque'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              id="tab-estoque"
-            >
-              Estoque
-              {estoque.length > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
-                  activeTab === 'estoque' 
-                    ? 'bg-blue-900 text-blue-200' 
-                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                }`}>
-                  {estoque.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('vendidos')}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'vendidos'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              id="tab-vendidos"
-            >
-              Vendidos
-              {vendidos.length > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
-                  activeTab === 'vendidos' 
-                    ? 'bg-emerald-950 text-emerald-300' 
-                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                }`}>
-                  {vendidos.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('despesas')}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'despesas'
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              id="tab-despesas"
-            >
-              Despesas
-              {despesas.length > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xxs font-extrabold ${
-                  activeTab === 'despesas' 
-                    ? 'bg-rose-950 text-rose-300' 
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                }`}>
-                  {despesas.length}
-                </span>
-              )}
-            </button>
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -724,6 +739,15 @@ export default function App() {
                     </div>
 
                     <div className="space-y-2 pt-4 border-t border-slate-700/30">
+                      <button
+                        onClick={() => setIsBackupModalOpen(true)}
+                        className="w-full py-2.5 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-purple-500/15 shadow-sm mb-1"
+                        type="button"
+                      >
+                        <Database className="w-3.5 h-3.5" />
+                        Fazer Backup / Restaurar
+                      </button>
+                      
                       {state.aparelhos.length === 0 ? (
                         <button
                           onClick={handleLoadSamples}
@@ -885,6 +909,13 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        currentState={state}
+        onRestore={(restoredState) => saveState(restoredState)}
+      />
       
     </div>
   );

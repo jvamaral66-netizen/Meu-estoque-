@@ -12,7 +12,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Despesa } from '../types';
-import { formatCurrency, formatDate } from '../utils';
+import { formatCurrency, formatDate, getTodayDateString } from '../utils';
 
 interface ExpensesViewProps {
   despesas: Despesa[];
@@ -30,7 +30,7 @@ export default function ExpensesView({
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
-  const [data, setData] = useState('2026-06-27');
+  const [data, setData] = useState(getTodayDateString());
   const [meioPagamento, setMeioPagamento] = useState<'banco' | 'dinheiro'>('banco');
   const [categoria, setCategoria] = useState<'marketing' | 'logistica' | 'embalagem' | 'taxas' | 'outros'>('outros');
   const [observacoes, setObservacoes] = useState('');
@@ -95,6 +95,7 @@ export default function ExpensesView({
     // Reset fields
     setDescricao('');
     setValor('');
+    setData(getTodayDateString());
     setObservacoes('');
     setIsAddFormOpen(false);
   };

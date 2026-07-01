@@ -7,7 +7,8 @@ import {
   COLOR_OPTIONS, 
   CATEGORY_OPTIONS, 
   ANDROID_BRANDS, 
-  VIDEOGAME_CONSOLES 
+  VIDEOGAME_CONSOLES,
+  getTodayDateString
 } from '../utils';
 
 interface IphoneFormModalProps {
@@ -17,9 +18,6 @@ interface IphoneFormModalProps {
 }
 
 export default function IphoneFormModal({ isOpen, onClose, onSave }: IphoneFormModalProps) {
-  const getTodayDateString = () => {
-    return '2026-06-27';
-  };
 
   const [categoria, setCategoria] = useState<'iPhone' | 'Android' | 'Videogame' | 'Notebook' | 'Ferramenta' | 'Outros'>('iPhone');
 

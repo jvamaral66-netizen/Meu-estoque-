@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, DollarSign, ArrowUpRight, ShieldAlert, BadgePercent, Building2 } from 'lucide-react';
 import { iPhone } from '../types';
-import { formatCurrency, formatDate } from '../utils';
+import { formatCurrency, formatDate, getTodayDateString } from '../utils';
 
 interface SellModalProps {
   isOpen: boolean;
@@ -19,11 +19,6 @@ interface SellModalProps {
 }
 
 export default function SellModal({ isOpen, onClose, estoque, preSelectedIphoneId, onSell }: SellModalProps) {
-  const getTodayDateString = () => {
-    // Current local time as metadata: 2026-06-27
-    return '2026-06-27';
-  };
-
   const [selectedId, setSelectedId] = useState('');
   const [valorVenda, setValorVenda] = useState('');
   const [dataVenda, setDataVenda] = useState(getTodayDateString());

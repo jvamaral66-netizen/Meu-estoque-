@@ -40,6 +40,15 @@ export const formatMonthYearPT = (yearMonthStr: string): string => {
   return yearMonthStr;
 };
 
+// Get current date as YYYY-MM-DD in local time
+export const getTodayDateString = (): string => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // List of popular iPhone models to auto-suggest
 export const IPHONE_MODELS = [
   'iPhone 11',
