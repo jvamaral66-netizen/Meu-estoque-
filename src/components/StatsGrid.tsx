@@ -29,6 +29,7 @@ interface StatsGridProps {
   totalDespesasMes: number;
   selectedMonthName?: string;
   onOpenDespesasTab?: () => void;
+  onOpenBalanceModal?: () => void;
 }
 
 export default function StatsGrid({
@@ -46,6 +47,7 @@ export default function StatsGrid({
   totalDespesasMes,
   selectedMonthName = 'Mês Atual',
   onOpenDespesasTab,
+  onOpenBalanceModal,
 }: StatsGridProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempBanco, setTempBanco] = useState(capitalBancoInicial.toString());
@@ -204,9 +206,19 @@ export default function StatsGrid({
             <Wallet className="w-4 h-4" />
           </div>
         </div>
-        <h3 className={`text-2xl font-bold tracking-tight font-display font-mono ${saldoDisponivel >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-          {formatCurrency(saldoDisponivel)}
-        </h3>
+        <div className="flex items-baseline justify-between mt-1">
+          <h3 className={`text-2xl font-bold tracking-tight font-display font-mono ${saldoDisponivel >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {formatCurrency(saldoDisponivel)}
+          </h3>
+          <button
+            onClick={onOpenBalanceModal}
+            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all cursor-pointer opacity-85 border border-transparent hover:border-emerald-500/20"
+            title="Editar saldos ou fazer transferência"
+            type="button"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
         {/* Real-time cash vs bank splits */}
         <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-750/40 pt-2.5">

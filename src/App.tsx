@@ -27,6 +27,7 @@ import StockView from './components/StockView';
 import SoldView from './components/SoldView';
 import ExpensesView from './components/ExpensesView';
 import BackupModal from './components/BackupModal';
+import BalanceModal from './components/BalanceModal';
 
 const STORAGE_KEY = 'controle_iphones_v1';
 
@@ -55,6 +56,7 @@ export default function App() {
   const [deletingPhoneId, setDeletingPhoneId] = useState<string | null>(null);
   const [isConfirmClearAllOpen, setIsConfirmClearAllOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
 
   // Load data from localStorage
   useEffect(() => {
@@ -326,6 +328,30 @@ export default function App() {
   const saldoBanco = capitalBancoInicial - comprasNoBanco + vendasNoBanco - despesasNoBanco;
   const saldoDinheiro = capitalDinheiroInicial - comprasNoDinheiro + vendasNoDinheiro - despesasNoDinheiro;
   const saldoDisponivel = saldoBanco + saldoDinheiro;
+
+  const handleAdjustBalances = (newSaldoBanco: number, newSaldoDinheiro: number) => {
+    const adjustedBancoInicial = newSaldoBanco + comprasNoBanco - vendasNoBanco + despesasNoBanco;
+    const adjustedDinheiroInicial = newSaldoDinheiro + comprasNoDinheiro - vendasNoDinheiro + despesasNoDinheiro;
+    
+    handleUpdateCapitalSplit(adjustedBancoInicial, adjustedDinheiroInicial);
+  };
+
+  const handleTransferBalance = (from: 'banco' | 'dinheiro', to: 'banco' | 'dinheiro', amount: number) => {
+    if (from === to || amount <= 0) return;
+    
+    let newSaldoBanco = saldoBanco;
+    let newSaldoDinheiro = saldoDinheiro;
+    
+    if (from === 'banco' && to === 'dinheiro') {
+      newSaldoBanco -= amount;
+      newSaldoDinheiro += amount;
+    } else if (from === 'dinheiro' && to === 'banco') {
+      newSaldoDinheiro -= amount;
+      newSaldoBanco += amount;
+    }
+    
+    handleAdjustBalances(newSaldoBanco, newSaldoDinheiro);
+  };
 
   // Check if a date string falls in the selected month
   const isInSelectedMonth = (dateString: string) => {
@@ -655,6 +681,7 @@ export default function App() {
                   totalVendidoMes={totalVendidoMes}
                   totalDespesasMes={totalDespesasMes}
                   onOpenDespesasTab={() => setActiveTab('despesas')}
+                  onOpenBalanceModal={() => setIsBalanceModalOpen(true)}
                   selectedMonthName={selectedMonth === 'all' ? 'Todos os meses' : formatMonthYearPT(selectedMonth)}
                 />
 
@@ -915,6 +942,15 @@ export default function App() {
         onClose={() => setIsBackupModalOpen(false)}
         currentState={state}
         onRestore={(restoredState) => saveState(restoredState)}
+      />
+      
+      <BalanceModal
+        isOpen={isBalanceModalOpen}
+        onClose={() => setIsBalanceModalOpen(false)}
+        saldoBanco={saldoBanco}
+        saldoDinheiro={saldoDinheiro}
+        onAdjustBalances={handleAdjustBalances}
+        onTransfer={handleTransferBalance}
       />
       
     </div>
